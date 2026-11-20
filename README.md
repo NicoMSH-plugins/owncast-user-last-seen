@@ -2,7 +2,7 @@
 
 Displays in the Owncast admin panel when users and moderators were last online or sent a chat message.
 
-<img width="952" height="696" alt="grafik" src="https://github.com/user-attachments/assets/e213dde1-4946-4337-834c-3eaea8f06cdc" />
+<img width="1628" height="722" alt="Screenshot" src="https://github.com/user-attachments/assets/e7c994b0-d181-4383-a556-4302a7052183" />
 
 ## Features
 
