@@ -2,7 +2,7 @@
 
 Displays in the Owncast admin panel when users and moderators were last online or sent a chat message.
 
-![User Last Seen Admin Panel](screenshot.png)
+<img width="952" height="696" alt="grafik" src="https://github.com/user-attachments/assets/e213dde1-4946-4337-834c-3eaea8f06cdc" />
 
 ## Features
 
