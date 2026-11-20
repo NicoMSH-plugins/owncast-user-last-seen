@@ -117,7 +117,9 @@ function pollConnectedClients() {
     });
     if (!res || res.status !== 200 || !res.body) return;
 
-    var clients = JSON.parse(res.body);
+    var rawBody = String(res.body).replace(/^\uFEFF/, "").trim();
+    if (!rawBody || (rawBody[0] !== "[" && rawBody[0] !== "{")) return;
+    var clients = JSON.parse(rawBody);
     if (!Array.isArray(clients) || clients.length === 0) return;
 
     var usersMap = readUsers();

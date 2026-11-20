@@ -29,3 +29,8 @@ Displays in the Owncast admin panel when users and moderators were last online o
 
 - **Author:** NicoMSH ([www.uaena.info](https://www.uaena.info))
 - **Requires:** Owncast v0.3.0+
+
+## Changelog
+
+### v1.3.3
+- **Fix:** Strips a leading UTF-8 BOM (`\uFEFF`) and validates the response format when polling `/api/admin/chat/clients` to prevent `Unexpected token '\ufeff' in JSON` log spam in Owncast.
