@@ -1,0 +1,26 @@
+{
+  "api": "1",
+  "name": "User Last Seen",
+  "slug": "user-last-seen",
+  "version": "1.3.2",
+  "description": "Displays in the admin panel when users and moderators were last online or sent a chat message. By NicoMSH.",
+  "permissions": ["http.serve", "network.fetch", "storage.fs"],
+  "network": { "allowedHosts": ["*"] },
+  "config": {
+    "owncastUrl": {
+      "type": "string",
+      "default": "http://127.0.0.1:8080",
+      "description": "Local Owncast URL without trailing slash (default: http://127.0.0.1:8080)"
+    },
+    "accessToken": {
+      "type": "string",
+      "default": "",
+      "description": "Owncast access token with admin access (under Integrations -> Access Tokens)"
+    }
+  },
+  "admin": {
+    "pages": {
+      "/admin/*": { "title": "Last Seen", "icon": "user" }
+    }
+  }
+}

@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>User Last Seen</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 1.25rem; color: #1f2937; }
+    h1 { margin: 0 0 0.4rem; font-size: 1.45rem; }
+    h2 { margin: 0 0 0.35rem; font-size: 1.15rem; font-weight: 700; color: #111827; }
+    .sub { color: #6b7280; margin: 0 0 1.2rem; font-size: 0.92rem; }
+    .notice { background: #fef3c7; border: 1px solid #f59e0b; color: #92400e; padding: 0.75rem 1rem; border-radius: 8px; margin-bottom: 1rem; font-size: 0.9rem; }
+    .toolbar { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; margin-bottom: 1rem; }
+    input[type="text"] { padding: 0.45rem 0.75rem; border: 1px solid #d1d5db; border-radius: 8px; font-size: 0.92rem; min-width: 220px; background: #fff; }
+    input[type="text"]:focus { outline: none; border-color: #6366f1; box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.15); }
+    label { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.9rem; cursor: pointer; user-select: none; }
+    button { padding: 0.45rem 0.85rem; border: 1px solid #d1d5db; background: #fff; border-radius: 8px; cursor: pointer; font-size: 0.88rem; }
+    button:hover { background: #f3f4f6; }
+    button.del { color: #b91c1c; border-color: #fecaca; padding: 0.25rem 0.55rem; font-size: 0.8rem; }
+    table { width: 100%; border-collapse: collapse; background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; margin-bottom: 1.75rem; }
+    th, td { text-align: left; padding: 0.65rem 0.85rem; border-bottom: 1px solid #e5e7eb; font-size: 0.9rem; }
+    th { background: #f9fafb; font-weight: 600; color: #374151; }
+    tr:hover td { background: #f9fafb; }
+    .badge { display: inline-block; padding: 0.15rem 0.45rem; border-radius: 999px; font-size: 0.75rem; font-weight: 600; margin-left: 0.35rem; }
+    .badge-mod { background: #dbeafe; color: #1e40af; }
+    .badge-bot { background: #f3e8ff; color: #6b21a8; }
+    .badge-auth { background: #dcfce7; color: #166534; }
+    .empty { text-align: center; padding: 2rem; color: #6b7280; }
+    .count-info { font-size: 0.85rem; color: #6b7280; margin-left: auto; }
+
+    .ignore-card { background: #f8fafc; border: 1px solid #e5e7eb; border-radius: 10px; padding: 1.1rem 1.25rem; }
+    .chip-list { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0.85rem 0 1rem; }
+    .name-chip {
+      display: inline-flex; align-items: center; gap: 0.45rem;
+      background: #eef2ff; color: #4f46e5;
+      padding: 0.35rem 0.75rem; border-radius: 999px;
+      font-size: 0.88rem; font-weight: 500;
+    }
+    .name-chip button {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 17px; height: 17px; padding: 0; border-radius: 50%;
+      border: 1.5px solid #4f46e5; background: transparent;
+      color: #4f46e5; font-size: 11px; line-height: 1; font-weight: 700;
+    }
+    .name-chip button:hover { background: #4f46e5; color: #fff; }
+    .chip-input-row { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
+    .chip-input-row input[type="text"] { min-width: 280px; }
+    .save-status { font-size: 0.83rem; color: #059669; margin-left: 0.4rem; }
+  </style>
+</head>
+<body>
+  <h1>Users – Last Seen</h1>
+  <p class="sub">Automatically tracks connected chat participants (every 30s) and sent chat messages.</p>
+
+  <div id="token-warning" class="notice" style="display:none;">
+    <strong>Notice:</strong> No <code>accessToken</code> is configured in the plugin settings yet. Without a token, only users who actively send chat messages will be tracked.
+  </div>
+
+  <div class="toolbar">
+    <input type="text" id="search" placeholder="Search by username...">
+    <label><input type="checkbox" id="only-mods"> Moderators only</label>
+    <label><input type="checkbox" id="hide-ignored" checked> Hide excluded names</label>
+    <button id="refresh-btn">Refresh</button>
+    <span class="count-info" id="count-info"></span>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Display Name</th>
+        <th>Last Online</th>
+        <th>Last Message</th>
+        <th>Messages</th>
+        <th>First Seen</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody id="tbody">
+      <tr><td colspan="6" class="empty">Loading data...</td></tr>
+    </tbody>
+  </table>
+
+  <div class="ignore-card">
+    <h2>Hidden usernames</h2>
+    <p class="sub" style="margin-bottom: 0.5rem;">
+      Usernames in this list will be hidden from the table above (moderators always remain visible). Type a name and press <strong>Enter</strong> to add it — wildcards like <code>Uaena*</code> are also supported.
+    </p>
+    <div class="chip-list" id="chip-list"></div>
+    <div class="chip-input-row">
+      <input type="text" id="new-ignore-input" placeholder="username">
+      <button type="button" id="add-ignore-btn">Add</button>
+      <span class="save-status" id="save-status"></span>
+    </div>
+  </div>
+
+  <script>
+    let allUsers = [];
+    let ignoredNames = [];
+
+    function formatDate(iso) {
+      if (!iso) return "–";
+      const d = new Date(iso);
+      if (isNaN(d.getTime())) return iso;
+      return d.toLocaleString("en-GB", {
+        day: "2-digit", month: "2-digit", year: "numeric",
+        hour: "2-digit", minute: "2-digit", second: "2-digit"
+      });
+    }
+
+    function escapeHtml(str) {
+      return String(str || "").replace(/[&<>"']/g, s => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+      }[s]));
+    }
+
+    function matchesIgnored(displayName) {
+      const nameLower = String(displayName || "").trim().toLowerCase();
+      if (!nameLower) return false;
+      return ignoredNames.some(pattern => {
+        const p = String(pattern || "").trim().toLowerCase();
+        if (!p) return false;
+        if (p.endsWith("*")) {
+          return nameLower.startsWith(p.slice(0, -1));
+        }
+        return nameLower === p;
+      });
+    }
+
+    function renderChips() {
+      const container = document.getElementById("chip-list");
+      if (ignoredNames.length === 0) {
+        container.innerHTML = '<span style="color:#6b7280;font-size:0.88rem;">No hidden usernames configured.</span>';
+        return;
+      }
+      container.innerHTML = ignoredNames.map((name, idx) => `
+        <span class="name-chip">
+          <span>${escapeHtml(name)}</span>
+          <button type="button" title="Remove" onclick="removeIgnored(${idx})">&times;</button>
+        </span>
+      `).join("");
+    }
+
+    async function saveIgnoredNames() {
+      const status = document.getElementById("save-status");
+      status.textContent = "Saving...";
+      try {
+        const res = await fetch("./api/ignored", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ignoredNames })
+        });
+        const data = await res.json();
+        ignoredNames = data.ignoredNames || ignoredNames;
+        renderChips();
+        renderTable();
+        status.textContent = "Saved";
+        setTimeout(() => { status.textContent = ""; }, 2000);
+      } catch (e) {
+        status.textContent = "Failed to save";
+      }
+    }
+
+    function addIgnoredName() {
+      const input = document.getElementById("new-ignore-input");
+      const val = input.value.trim();
+      if (!val) return;
+      if (!ignoredNames.some(n => n.toLowerCase() === val.toLowerCase())) {
+        ignoredNames.push(val);
+        saveIgnoredNames();
+      }
+      input.value = "";
+    }
+
+    function removeIgnored(index) {
+      ignoredNames.splice(index, 1);
+      saveIgnoredNames();
+    }
+
+    function renderTable() {
+      const q = document.getElementById("search").value.trim().toLowerCase();
+      const onlyMods = document.getElementById("only-mods").checked;
+      const hideIgnored = document.getElementById("hide-ignored").checked;
+      const tbody = document.getElementById("tbody");
+
+      const filtered = allUsers.filter(u => {
+        const name = String(u.displayName || "");
+        if (onlyMods && !u.isModerator) return false;
+        if (hideIgnored && !u.isModerator && matchesIgnored(name)) return false;
+        if (q && !name.toLowerCase().includes(q)) return false;
+        return true;
+      });
+
+      const hiddenCount = allUsers.length - filtered.length;
+      document.getElementById("count-info").textContent =
+        `${filtered.length} shown` + (hiddenCount > 0 ? ` (${hiddenCount} hidden)` : "");
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="empty">No matching entries found.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(u => {
+        let badges = "";
+        if (u.isModerator) badges += '<span class="badge badge-mod">Moderator</span>';
+        if (u.isBot) badges += '<span class="badge badge-bot">Bot</span>';
+        if (u.authenticated) badges += '<span class="badge badge-auth">Auth</span>';
+
+        return `<tr>
+          <td><strong>${escapeHtml(u.displayName)}</strong>${badges}</td>
+          <td>${formatDate(u.lastSeen)}</td>
+          <td>${formatDate(u.lastMessageAt)}</td>
+          <td>${u.messageCount || 0}</td>
+          <td>${formatDate(u.firstSeen)}</td>
+          <td><button class="del" onclick="removeUser('${encodeURIComponent(u.id)}')">Remove</button></td>
+        </tr>`;
+      }).join("");
+    }
+
+    async function loadData() {
+      try {
+        const res = await fetch("./api/users");
+        const data = await res.json();
+        allUsers = data.users || [];
+        ignoredNames = Array.isArray(data.ignoredNames) ? data.ignoredNames : [];
+        document.getElementById("token-warning").style.display = data.hasToken ? "none" : "block";
+        renderChips();
+        renderTable();
+      } catch (e) {
+        document.getElementById("tbody").innerHTML = '<tr><td colspan="6" class="empty">Error loading data.</td></tr>';
+      }
+    }
+
+    async function removeUser(encodedId) {
+      await fetch("./api/users?id=" + encodedId, { method: "DELETE" });
+      loadData();
+    }
+
+    document.getElementById("search").addEventListener("input", renderTable);
+    document.getElementById("only-mods").addEventListener("change", renderTable);
+    document.getElementById("hide-ignored").addEventListener("change", renderTable);
+    document.getElementById("refresh-btn").addEventListener("click", loadData);
+    document.getElementById("add-ignore-btn").addEventListener("click", addIgnoredName);
+    document.getElementById("new-ignore-input").addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        addIgnoredName();
+      }
+    });
+
+    loadData();
+  </script>
+<p style="margin-top:1.5rem;font-size:0.85rem;color:#6b7280;">User Last Seen by <strong>NicoMSH</strong> · <a href="https://www.uaena.info" target="_blank" rel="noopener" style="color:#4f46e5;text-decoration:none;">www.uaena.info</a></p></body>
+</html>
